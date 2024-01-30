@@ -1,0 +1,100 @@
+Function GetArtiklfromLagerPlatz(ByVal sURL As String) As String
+    Set oXMLHTTP = CreateObject("MSXML2.ServerXMLHTTP.6.0")
+    With oXMLHTTP
+        oXMLHTTP.Open "GET", sURL, False
+        oXMLHTTP.SetRequestHeader "User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)"
+        oXMLHTTP.Send
+        GetArtiklfromLagerPlatz = .ResponseText
+          'If GetResponse = "{products: [], facets: [], count: 0, currentPage: 0, pageSize: 30, totalPages: 0}" Then MsgBox "function is canceled"
+       
+   
+    End With
+    Set oXMLHTTP = Nothing
+     p = 1
+End Function
+
+Function lagerPlatzArtikl(LagerPlatz As String)
+Text = GetArtiklfromLagerPlatz("https://api-core-borc3.loxxitone.loxxess.com/api/handlingunits?storagePlace=" & LagerPlatz)
+
+BeginF = InStr(1, Text, "articleNumbers") + Len(BeginF) + 18
+  UnderRowF = Mid(Text, BeginF, 150)
+  'EndTextF = 1
+   EndTextF = InStr(1, UnderRowF, "]") - 2
+  lagerPlatzArtikl = Mid(Text, BeginF, EndTextF)
+
+End Function
+
+Function WeightLager(LagerPlatzOrBarcode As String)
+Text = GetArtiklfromLagerPlatz("https://api-core-borc3.loxxitone.loxxess.com/api/handlingunits?storagePlace=" & LagerPlatzOrBarcode)
+
+BeginWeight = InStr(1, Text, "weight") + Len(BeginWeight) + 8
+  UnderRowWeight = Mid(Text, BeginWeight, 150)
+  'EndTextF = 1
+   EndTextWeight = InStr(1, UnderRowWeight, "height") - 3
+  WeightLager = Mid(Text, BeginWeight, EndTextWeight) & " g"
+
+End Function
+
+Function BednaArtikl(Bedna As String)
+Text = GetArtiklfromLagerPlatz("https://api-core-borc3.loxxitone.loxxess.com/api/handlingunits?barcode=" & Bedna)
+
+BeginF = InStr(1, Text, "articleNumbers") + Len(BeginF) + 18
+  UnderRowF = Mid(Text, BeginF, 150)
+  'EndTextF = 1
+   EndTextF = InStr(1, UnderRowF, "]") - 2
+  BednaArtikl = Mid(Text, BeginF, EndTextF)
+
+End Function
+
+Function WeightBedna(Bedna As String)
+Text = GetArtiklfromLagerPlatz("https://api-core-borc3.loxxitone.loxxess.com/api/handlingunits?barcode=" & Bedna)
+
+BeginWeight = InStr(1, Text, "weight") + Len(BeginWeight) + 8
+  UnderRowWeight = Mid(Text, BeginWeight, 150)
+  'EndTextF = 1
+   EndTextWeight = InStr(1, UnderRowWeight, "height") - 3
+  WeightBedna = Mid(Text, BeginWeight, EndTextWeight) & " g"
+
+End Function
+
+
+
+
+
+
+Function GetLOSdata(ByVal sURL As String) As String
+    Set oXMLHTTP = CreateObject("MSXML2.ServerXMLHTTP.6.0")
+    With oXMLHTTP
+        oXMLHTTP.Open "GET", sURL, False
+        oXMLHTTP.SetRequestHeader "User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)"
+        oXMLHTTP.Send
+        GetArtiklfromLagerPlatz = .ResponseText
+          'If GetResponse = "{products: [], facets: [], count: 0, currentPage: 0, pageSize: 30, totalPages: 0}" Then MsgBox "function is canceled"
+       
+   
+    End With
+    Set oXMLHTTP = Nothing
+     p = 1
+End Function
+
+Function LOSdata(IDartikl As String)
+Text = GetArtiklfromLagerPlatz("https://api-core-borc3.loxxitone.loxxess.com/api/articles/" & IDartikl)
+
+BeginF = InStr(1, Text, "defaultHandlingUnitQuantity") + Len(BeginF) + 29
+  UnderRowF = Mid(Text, BeginF, 150)
+  'EndTextF = 1
+   EndTextF = InStr(1, UnderRowF, "defaultHandlingUnitType") - 3
+  LOSdata = Mid(Text, BeginF, EndTextF)
+
+End Function
+
+Function LOSFixPlatz(IDartikl As String)
+Text = GetArtiklfromLagerPlatz("https://api-core-borc3.loxxitone.loxxess.com/api/articles/" & IDartikl)
+
+BeginF = InStr(1, Text, "fixedPlaces") + Len(BeginF) + 15
+  UnderRowF = Mid(Text, BeginF, 150)
+  'EndTextF = 1
+   EndTextF = InStr(1, UnderRowF, "geoDataCheckedDate") - 5
+  LOSFixPlatz = Mid(Text, BeginF, EndTextF)
+
+End Function

@@ -1,0 +1,65 @@
+Function GetFixplatz(ByVal sURL As String) As String
+    Set oXMLHTTP = CreateObject("MSXML2.ServerXMLHTTP.6.0")
+    With oXMLHTTP
+        oXMLHTTP.Open "GET", sURL, False
+        oXMLHTTP.SetRequestHeader "User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)"
+        oXMLHTTP.Send
+        GetFixplatz = .ResponseText
+          'If GetResponse = "{products: [], facets: [], count: 0, currentPage: 0, pageSize: 30, totalPages: 0}" Then MsgBox "function is canceled"
+       
+   
+    End With
+    Set oXMLHTTP = Nothing
+     p = 1
+End Function
+Function FixplatzF(Art As String)
+Text = GetFixplatz("https://api-transportationexchange-borc3.loxxitone.loxxess.com/api/v1/articles?number=" & Art)
+  
+  BeginF = InStr(1, Text, "fixedStoragePlaces") + Len(BeginF) + 22
+  UnderRowF = Mid(Text, BeginF, 150)
+  EndTextF = InStr(1, UnderRowF, "id") - 5
+  
+  Articl = Mid(Text, BeginF, EndTextF)
+  FixplatzF = Articl
+End Function
+
+
+Function GetKanalInfo(ByVal sURL As String) As String
+    Set oXMLHTTP = CreateObject("MSXML2.ServerXMLHTTP.6.0")
+    With oXMLHTTP
+        oXMLHTTP.Open "GET", sURL, False
+        oXMLHTTP.SetRequestHeader "User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)"
+        oXMLHTTP.Send
+        GetKanalInfo = .ResponseText
+          'If GetResponse = "{products: [], facets: [], count: 0, currentPage: 0, pageSize: 30, totalPages: 0}" Then MsgBox "function is canceled"
+       
+   
+    End With
+    Set oXMLHTTP = Nothing
+     p = 1
+End Function
+
+
+Function KanalCapacity(LagerPlatz As String)
+Text = GetKanalInfo("https://api-transportationexchange-borc3.loxxitone.loxxess.com/api/v1/places?barcode=" & LagerPlatz)
+
+BeginLp = InStr(1, Text, "current") + Len(BeginLp) + 9
+
+underRowLp = Mid(Text, BeginLp, 150)
+EndTextLp = InStr(1, underRowLp, "placeType") - 4
+
+KanalCapacity = Mid(Text, BeginLp, EndTextLp)
+
+End Function
+
+Function Aproaching(LagerPlatz As String)
+Text = GetKanalInfo("https://api-transportationexchange-borc3.loxxitone.loxxess.com/api/v1/places?barcode=" & LagerPlatz)
+
+BeginLp = InStr(1, Text, "approaching") + Len(BeginLp) + 13
+
+underRowLp = Mid(Text, BeginLp, 150)
+EndTextLp = InStr(1, underRowLp, "current") - 3
+
+Aproaching = Mid(Text, BeginLp, EndTextLp)
+
+End Function

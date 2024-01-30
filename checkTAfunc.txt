@@ -1,0 +1,73 @@
+Function GetBednaInfo(ByVal sURL As String) As String
+    Set oXMLHTTP = CreateObject("MSXML2.ServerXMLHTTP.6.0")
+    With oXMLHTTP
+        oXMLHTTP.Open "GET", sURL, False
+        oXMLHTTP.SetRequestHeader "User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)"
+        oXMLHTTP.Send
+        GetBednaInfo = .ResponseText
+          'If GetResponse = "{products: [], facets: [], count: 0, currentPage: 0, pageSize: 30, totalPages: 0}" Then MsgBox "function is canceled"
+       
+   
+    End With
+    Set oXMLHTTP = Nothing
+     p = 1
+End Function
+Function TA(Art As String)
+Text = GetBednaInfo("https://api-transportationexchange-borc3.loxxitone.loxxess.com/api/v1/handlingunits?barcode=" & Art)
+  
+  BeginF = InStr(1, Text, "transportOrderExists") + Len(BeginF) + 22
+  UnderRowF = Mid(Text, BeginF, 150)
+  EndTextF = InStr(1, UnderRowF, "weight") - 3
+  
+  TA = Mid(Text, BeginF, EndTextF)
+ 
+End Function
+
+Function BednaArtiklGEB(Bedna As String)
+Text = GetBednaInfo("https://api-transportationexchange-borc3.loxxitone.loxxess.com/api/v1/handlingunits?barcode=" & Bedna)
+  
+  Begin = InStr(1, Text, "articleNumber") + Len(Begin) + 16
+  UnderRow = Mid(Text, Begin, 150)
+  EndText = InStr(1, UnderRow, "barcode") - 4
+  
+  BednaArtiklGEB = Mid(Text, Begin, EndText)
+ 
+End Function
+
+Function BednaWeightGEB(Art As String)
+Text = GetBednaInfo("https://api-transportationexchange-borc3.loxxitone.loxxess.com/api/v1/handlingunits?barcode=" & Art)
+
+BeginW = InStr(1, Text, "weight") + Len(BeginW) + 8
+
+
+underRowW = Mid(Text, BeginW, 150)
+EndTextW = InStr(1, underRowW, "}") - 1
+
+BednaWeightGEB = Mid(Text, BeginW, EndTextW) & " g"
+
+
+End Function
+
+
+Function BednaLagerPlatzGEB(Art As String)
+Text = GetBednaInfo("https://api-transportationexchange-borc3.loxxitone.loxxess.com/api/v1/handlingunits?barcode=" & Art)
+
+BeginLp = InStr(1, Text, "currentPlace") + Len(BeginLp) + 15
+
+underRowLp = Mid(Text, BeginLp, 150)
+EndTextLp = InStr(1, underRowLp, "handlingUnitType") - 4
+
+BednaLagerPlatzGEB = Mid(Text, BeginLp, EndTextLp)
+
+End Function
+
+Function AproachingPozitionGEB(Bedna As String)
+Text = GetBednaInfo("https://api-transportationexchange-borc3.loxxitone.loxxess.com/api/v1/handlingunits?barcode=" & Bedna)
+
+BeginLp = InStr(1, Text, "approachingPlace") + Len(BeginLp) + 19
+
+underRowLp = Mid(Text, BeginLp, 150)
+EndTextLp = InStr(1, underRowLp, "articleNumber") - 4
+
+AproachingPozitionGEB = Mid(Text, BeginLp, EndTextLp)
+End Function
