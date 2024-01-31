@@ -1,0 +1,341 @@
+Dim i As String
+Dim rng As Range
+Dim o As Integer
+Dim Colichestvo As Integer
+Dim ErrTimeout As String
+Dim p As Integer
+Dim ImgLink As String
+Dim pictureLink As String
+Dim notFound As String
+
+
+Dim pictureCells As Range
+
+
+
+Function GETGTINRESPONSE(ByVal sURL As String) As String
+    Set oXMLHTTP1 = CreateObject("MSXML2.ServerXMLHTTP.6.0")
+    With oXMLHTTP1
+        oXMLHTTP1.Open "GET", sURL, False
+        'oXMLHTTP1.SetProxy 2, "91.107.211.49:8080", ""
+        oXMLHTTP1.SetRequestHeader "User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)"
+        oXMLHTTP1.Send
+        GETGTINRESPONSE = .ResponseText
+    End With
+    Set oXMLHTTP = Nothing
+     p = 2
+End Function
+Function GetResponse(ByVal sURL As String) As String
+    Set oXMLHTTP = CreateObject("MSXML2.ServerXMLHTTP.6.0")
+    With oXMLHTTP
+        oXMLHTTP.Open "GET", sURL, False
+        oXMLHTTP.SetRequestHeader "User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)"
+        oXMLHTTP.Send
+        GetResponse = .ResponseText
+          'If GetResponse = "{products: [], facets: [], count: 0, currentPage: 0, pageSize: 30, totalPages: 0}" Then MsgBox "function is canceled"
+       
+   
+    End With
+    Set oXMLHTTP = Nothing
+     p = 1
+End Function
+Function GetProxyResponse1(ByVal sURL As String) As String
+    Set oXMLHTTP1 = CreateObject("MSXML2.ServerXMLHTTP.6.0")
+    With oXMLHTTP1
+        oXMLHTTP1.Open "GET", sURL, False
+        'oXMLHTTP1.SetProxy 2, "91.107.211.49:8080", ""
+        oXMLHTTP1.SetRequestHeader "User-Agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)"
+        oXMLHTTP1.Send
+        GetProxyResponse1 = .ResponseText
+    End With
+    Set oXMLHTTP = Nothing
+     p = 2
+End Function
+Function DmName(Art As String)
+If p Mod 2 = 0 Then
+Text = GetProxyResponse1("https://product-search.services.dmtech.com/de/search/crawl?query=" & Art & "&searchType=product&type=search&element=3")
+p = p + 1
+Else:
+Text = GetResponse("https://product-search.services.dmtech.com/de/search/crawl?query=" & Art & "&searchType=product&type=search&element=3")
+p = p + 1
+End If
+
+
+
+
+
+Begin = InStr(1, Text, "brandName") + Len(Begin) + 12
+UnderRow = Mid(Text, Begin, 150)
+EndText = InStr(1, UnderRow, "title") - 4
+
+
+Articl = Mid(Text, Begin, EndText)
+
+BeginT = InStr(1, Text, "title") + Len(BeginT) + 8
+UnderT = Mid(Text, BeginT, 150)
+EndT = InStr(1, UnderT, "isoCountry") - 4
+
+ProductTitle = Mid(Text, BeginT, EndT)
+
+DmName = Articl & " " & ProductTitle
+
+End Function
+Function Fixplatz(Articl As String)
+Text = GetResponse("https://api-transportationexchange-borc3.loxxitone.loxxess.com/api/v1/articles?number=" & Articl)
+  
+  BeginF = InStr(1, Text, "fixedStoragePlaces") + Len(BeginF)
+  UnderRowF = Mid(Text, BeginF, 150)
+  EndTextF = InStr(1, UnderRowF, "id")
+  
+  ArticlF = Mid(Text, BeginF, EndTextF)
+  
+End Function
+Function ErrorHendler(ErrArt As String) As Boolean
+
+    Text = GETGTINRESPONSE("https://product-search.services.dmtech.com/de/search/crawl?query=" & ErrArt & "&searchType=product&type=search&element=3")
+
+    ' Check if "currentPage":0 is in the response
+    If InStr(1, Text, "name") > 0 Then
+        ' If "currentPage":0 is found, it means no results were found, thus returning True
+        ErrorHendler = False
+    Else
+        ' If "currentPage":0 is not found, there might be data, thus returning False
+        ErrorHendler = True
+    End If
+End Function
+Function TooManyRequestsErrorHandler(ErrArt As String) As Boolean
+    Dim Text As String
+    Text = GETGTINRESPONSE("https://product-search.services.dmtech.com/de/search/crawl?query=" & ErrArt & "&searchType=product&type=search&element=3")
+    
+    ' Check if the response contains the "Too many requests!" message
+    If InStr(1, Text, "message") > 0 Then
+        TooManyRequestsErrorHandler = True
+    Else
+        TooManyRequestsErrorHandler = False
+    End If
+End Function
+
+
+
+Function Gtin(ArtG As String)
+Text = GETGTINRESPONSE("https://product-search.services.dmtech.com/de/search/crawl?query=" & ArtG & "&searchType=product&type=search&element=3")
+
+BeginG = InStr(1, Text, "gtin") + Len(BeginG) + 6
+UnderG = Mid(Text, BeginG, 150)
+EndG = InStr(1, UnderG, "dan") - 3
+
+
+Gtin = Mid(Text, BeginG, EndG)
+End Function
+
+
+Function ArtFromGtin(Gtin As String)
+
+    Text = GETGTINRESPONSE("https://product-search.services.dmtech.com/de/search/crawl?query=" & Gtin & "&searchType=product&type=search&element=3")
+
+    ' Find positions
+    BeginGA = InStr(1, Text, "dan")
+    If BeginGA > 0 Then
+        BeginGA = BeginGA + Len("dan") + 2
+        EndGA = InStr(BeginGA, Text, "name") - 2
+
+        If EndGA > BeginGA Then
+            EndGA = EndGA - BeginGA
+            ArtFromGtin = Mid(Text, BeginGA, EndGA)
+        Else
+            ArtFromGtin = "" ' Error in finding EndGA
+        End If
+    Else
+        ArtFromGtin = "" ' Error in finding BeginGA
+    End If
+End Function
+Public Sub Name_for_article_range()
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+
+    ' Find the last row with data in column A
+    Dim LastRow As Long
+    LastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+
+    ' Variables for loop control
+    Dim allRowsProcessed As Boolean
+    Dim i As Long
+
+    ' Retry mechanism variables
+    Dim retryCount As Integer
+    Dim waitDuration As Double
+
+    ' Initial wait duration in seconds (60 seconds for the first retry)
+    waitDuration = 60
+
+    ' Keep looping until all rows are processed as per conditions
+    Do
+        allRowsProcessed = True ' Assume all rows will be processed in this pass
+
+        For i = 2 To LastRow
+            If TooManyRequestsErrorHandler(ws.Cells(i, 1).Value) Then
+                ' Implement a delay using Timer and DoEvents
+                Dim Starting_Time As Double
+                Starting_Time = Timer
+                
+                Do While Timer < Starting_Time + waitDuration
+                    DoEvents ' Keep Excel responsive
+                Loop
+                
+                ' After waiting, mark as not all rows processed and exit the for loop
+                allRowsProcessed = False
+                Exit For ' Exit to adjust waitDuration and possibly retry
+            ElseIf IsEmpty(ws.Cells(i, 5).Value) And Not ErrorHendler(ws.Cells(i, 1).Value) Then
+                ' Process the row if ErrorHendler check passes
+                ProcessRow ws, i ' Assume ProcessRow is a subroutine that processes the row
+            End If
+        Next i
+
+        ' Adjust wait time for the next retry
+        If Not allRowsProcessed Then
+            If retryCount = 0 Then
+                waitDuration = 120 ' Set to 120 seconds (2 minutes) for the next retry
+            End If
+            retryCount = retryCount + 1
+        End If
+
+    Loop Until allRowsProcessed Or retryCount > 1 ' Retry limit
+
+End Sub
+Sub ProcessRow(ws As Worksheet, i As Long)
+    ' Process the row if ErrorHendler check passes
+    If Not IsEmpty(ws.Cells(i, 1).Value) Then
+        ws.Cells(i, 5).Value = DmName(ws.Cells(i, 1).Value)
+        ws.Cells(i, 6).Value = Gtin(ws.Cells(i, 1).Value)
+        ws.Cells(i, 7).Value = picture(ws.Cells(i, 1).Value)
+        ws.Cells(i, 8).Formula = "=IMAGE(G" & i & ")"
+        
+        Dim newArtValue As String
+        newArtValue = ArtFromGtin(ws.Cells(i, 6).Value)
+        If newArtValue <> "" Then
+            ws.Cells(i, 1).Value = newArtValue
+        End If
+    End If
+End Sub
+
+Function DMparseNAme()
+i = o
+While i < o + Colichestvo
+
+On Error GoTo NextRun
+Cells(i, 5) = DmName(Cells(i, 1))
+Cells(i, 6) = Gtin(Cells(i, 1))
+Cells(i, 7) = picture(Cells(i, 1))
+ Cells(i, 8).Formula = "=IMAGE(G" & i & ")"
+  Cells(i, 9) = ErrorHendler(Cells(i, 1))
+   'Cells(i, 8) = NewPicsToRanges(Cells(i, 9), Cells(i, 8))
+   
+    i = i + 1
+Wend
+Exit Function
+
+NextRun:
+Starting_Time = Timer
+Do
+DoEvents
+Loop Until (Timer - Starting_Time) >= 10
+      Call ParseNext
+End Function
+
+'Function propusk()
+'i = i + 1
+'Call DmparseNext
+'End Function
+
+Function ParseNext()
+
+While i <= o + Colichestvo - 1
+
+On Error GoTo NextRun1
+
+ If Not ErrorHendler(Cells(i, 1)) Then
+        Call ParseNext
+    End If
+    
+Cells(i, 5) = DmName(Cells(i, 1))
+Cells(i, 6) = Gtin(Cells(i, 1))
+Cells(i, 7) = picture(Cells(i, 1))
+ Cells(i, 8).Formula = "=IMAGE(G" & i & ")"
+
+    i = i + 1
+Wend
+Call DMparseNAme
+
+Exit Function
+
+NextRun1:
+i = i + 1
+    
+      If Cells(i, 1) = "" Or i >= o + Colichestvo Then
+      Call DMparseNAme
+      Else: Call ParseNext
+      End If
+      
+End Function
+
+'Sub NextStart()
+'TimeToRun = Now + TimeValue("00:00:30")
+'Application.OnTime TimeToRun, "DmparseNAme"
+'End Sub
+
+'Sub finish()
+'Application.OnTime TimeToRun, "DmparseNAme", , False
+'End Sub
+
+
+
+
+Public Function VELKIYSKLAD(URL1 As String, Optional TargetCells1 As Range)
+' inserts a picture and resizes it to fit the TargetCells range
+
+ActiveSheet.Shapes.SelectAll
+Selection.Delete
+
+Dim p1 As Object, t1 As Double, l1 As Double, w1 As Double, h1 As Double
+    If TypeName(ActiveSheet) <> "Worksheet" Then Exit Function
+    'If Dir(URL1) = "" Then Exit Function
+    ' import picture
+    Set p1 = ActiveSheet.Pictures.Insert(URL1)
+    ' determine positions
+    With TargetCells1
+        t1 = .Top
+        l1 = .Left
+        w1 = .Offset(0, .Columns.Count).Left - .Left
+        h1 = .Offset(.Rows.Count, 0).Top - .Top
+    End With
+    ' position picture
+    With p1
+        .Top = t1
+        .Left = l1
+        .Width = w1
+        .Height = h1
+    End With
+    Set p1 = Nothing
+End Function
+
+
+
+Function picture(ArtG As String)
+Text = GETGTINRESPONSE("https://product-search.services.dmtech.com/de/search/crawl?query=" & ArtG & "&searchType=product&type=search&element=3")
+
+BeginI = InStr(1, Text, "imageUrlTemplates") + Len(BeginI) + 21 + 52
+UnderI = Mid(Text, BeginI, 200)
+EndI = InStr(1, UnderI, "price") - 5
+
+ImgLink = "https://media.dm-static.com/images/f_auto,q_auto,c_fit,h_440,w_500"
+
+picture = ImgLink + Mid(Text, BeginI, EndI)
+
+
+
+
+
+
+End Function
+
+
