@@ -1,0 +1,60 @@
+Public Sub Name_for_article_range()
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+
+    ' Variables for retry mechanism
+    Dim retryCount As Integer
+    Dim maxRetries As Integer: maxRetries = 10
+    Dim waitDuration As Double: waitDuration = 60 ' Wait duration in seconds for the timeout between retries
+
+    ' Outer loop for retries
+    Do While retryCount < maxRetries
+        ' Find the last row with data in column A each time, in case it changes
+        Dim LastRow As Long
+        LastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+
+        Dim i As Long
+        i = 2 ' Start processing from the second row
+
+        Dim allRowsProcessed As Boolean
+        allRowsProcessed = True ' Assume all rows will be processed this pass
+
+        While i <= LastRow
+            If IsEmpty(ws.Cells(i, 5).Value) Then
+                If TooManyRequestsErrorHandler(ws.Cells(i, 1).Value) Then
+                    allRowsProcessed = False ' Mark that not all rows were processed
+                    i = i + 1 ' Move to the next row, skipping processing for this one
+                Else
+                    If Not ErrorHendler(ws.Cells(i, 1).Value) Then
+                        ProcessRow ws, i
+                    Else
+                        ws.Cells(i, 5).Value = "Error or Article Not Available"
+                    End If
+                End If
+            End If
+            i = i + 1
+        Wend
+
+        ' If all rows were processed successfully, exit the retry loop
+        If allRowsProcessed Then Exit Do
+
+        ' Implement a responsive wait period before the next retry
+        If retryCount < maxRetries - 1 Then ' No need to wait after the last retry
+            Dim endTime As Double
+            endTime = Timer + waitDuration
+            Do While Timer < endTime
+                DoEvents ' Keep Excel responsive during the wait
+            Loop
+        End If
+
+        ' Increment the retry counter before potentially retrying
+        retryCount = retryCount + 1
+    Loop
+
+    ' Optional: Notify the user of the outcome
+    If allRowsProcessed Then
+        MsgBox "All rows processed successfully."
+    Else
+        MsgBox "Not all rows could be processed after " & maxRetries & " attempts."
+    End If
+End Sub
