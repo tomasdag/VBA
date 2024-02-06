@@ -1,0 +1,70 @@
+Sub ButtonClick()
+    Dim sourceSheet As Worksheet
+    Dim targetWorkbook As Workbook
+    Dim targetSheet As Worksheet
+    Dim LastRow As Long, i As Long
+    Dim sourceRange As Range
+    Dim numberOfColumnsToCopy As Integer
+    Dim userName As String
+    Dim timeStamp As String
+
+    ' Set the source sheet and user name
+    Set sourceSheet = ThisWorkbook.Sheets(1) ' Adjust with your actual sheet name
+    userName = Environ("username")
+    timeStamp = Now()
+
+    ' Set the number of columns to copy
+    numberOfColumnsToCopy = 9 ' Adjust this to copy more or fewer columns
+
+    ' Open the target workbook
+    Set targetWorkbook = Workbooks.Open("D:\history.xlsx") ' Adjust to your target workbook path
+    Set targetSheet = targetWorkbook.Sheets(1) ' Adjust to your target sheet name
+
+    ' Find the last row of data in the source sheet
+    LastRow = sourceSheet.Cells(sourceSheet.Rows.Count, 1).End(xlUp).Row
+
+    ' Loop through each row to copy
+    For i = 2 To LastRow ' Start from 2 to skip the header
+        ' Define the range for the current row
+        Set sourceRange = sourceSheet.Range(sourceSheet.Cells(i, 1), sourceSheet.Cells(i, numberOfColumnsToCopy))
+
+        ' Find the next available row in the target sheet
+        Dim nextRow As Long
+        nextRow = targetSheet.Cells(targetSheet.Rows.Count, 1).End(xlUp).Row + 1
+
+        ' Copy and paste the current row
+        sourceRange.Copy
+        targetSheet.Cells(nextRow, 1).PasteSpecial Paste:=xlPasteValues
+
+        ' Add timestamp and username
+        targetSheet.Cells(nextRow, numberOfColumnsToCopy + 1).Value = timeStamp
+        targetSheet.Cells(nextRow, numberOfColumnsToCopy + 2).Value = userName
+    Next i
+
+    Application.CutCopyMode = False
+
+    ' Clear contents from the source sheet, but keep the first row
+    If LastRow > 1 Then
+        Dim clearRange As Range
+        Set clearRange = sourceSheet.Range(sourceSheet.Cells(2, 1), sourceSheet.Cells(LastRow, numberOfColumnsToCopy))
+        clearRange.ClearContents
+
+        ' Apply formatting: no background color and automatic text color
+        With clearRange
+            .Interior.Color = xlNone ' No background color
+            .Font.Color = -16777216 ' Automatic text color
+            .Font.Bold = False ' Ensure text is not bold
+        End With
+
+        ' Optionally apply a header style to the first row of the source sheet
+        With sourceSheet.Rows(1).Cells(1, 1).Resize(1, numberOfColumnsToCopy)
+            .Interior.Color = RGB(184, 204, 228) ' Example header color
+            .Font.Color = RGB(0, 0, 0) ' Black text color
+            .Font.Bold = True ' Bold text for header
+        End With
+    End If
+
+    ' Close the target workbook
+    targetWorkbook.Close SaveChanges:=True
+End Sub
+
